@@ -1,0 +1,116 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.kirayim</groupId>
+  <artifactId>video-player-poc</artifactId>
+  <version>0.0.1-SNAPSHOT</version>
+  <name>Video player POC</name>
+  
+  <properties>
+		<maven.compiler.target>11</maven.compiler.target>
+		<maven.compiler.source>11</maven.compiler.source>
+  </properties>
+
+	<build>
+		<plugins>
+		    <plugin>
+		        <groupId>org.openjfx</groupId>
+		        <artifactId>javafx-maven-plugin</artifactId>
+		        <version>0.0.6</version>
+		        <configuration>
+		            <mainClass>com.kirayim.tests.video_tester.JfxPlayer</mainClass>
+		        </configuration>
+		    </plugin>
+		</plugins>
+	</build>
+
+
+	<dependencies>
+		<!-- https://mvnrepository.com/artifact/org.openpnp/opencv -->
+		<dependency>
+		    <groupId>org.openpnp</groupId>
+		    <artifactId>opencv</artifactId>
+		    <version>4.5.1-2</version>
+		</dependency>
+
+ 		<!--  ====================================================================== -->
+        <dependency>
+            <groupId>org.bytedeco</groupId>
+            <artifactId>javacv-platform</artifactId>
+            <version>1.5.5</version>
+        </dependency>
+
+        <!-- Additional dependencies required to use CUDA and cuDNN -->
+        <dependency>
+            <groupId>org.bytedeco</groupId>
+            <artifactId>opencv-platform-gpu</artifactId>
+            <version>4.5.1-1.5.5</version>
+        </dependency>
+
+        <!-- Optional GPL builds with (almost) everything enabled -->
+        <dependency>
+            <groupId>org.bytedeco</groupId>
+            <artifactId>ffmpeg-platform-gpl</artifactId>
+            <version>4.3.2-1.5.5</version>
+        </dependency>
+ 		
+ 		
+ 		<!--  ====================================================================== -->
+ 		<!-- https://mvnrepository.com/artifact/org.bytedeco/ffmpeg -->
+		<dependency>
+		    <groupId>org.bytedeco</groupId>
+		    <artifactId>ffmpeg</artifactId>
+		    <version>4.3.2-1.5.5</version>
+		</dependency>
+ 		
+		<!-- https://mvnrepository.com/artifact/org.bytedeco/ffmpeg-platform 
+		<dependency>
+		    <groupId>org.bytedeco</groupId>
+		    <artifactId>ffmpeg-platform</artifactId>
+		    <version>4.3.2-1.5.5</version>
+		</dependency>
+-->
+
+        <!-- Optional GPL builds with (almost) everything enabled -->
+        <dependency>
+            <groupId>org.bytedeco</groupId>
+            <artifactId>ffmpeg-platform-gpl</artifactId>
+            <version>4.3.2-1.5.5</version>
+        </dependency>	 		
+ 		
+ 		<!--  ====================================================================== -->
+ 		<!-- https://mvnrepository.com/artifact/org.openjfx/javafx-media -->
+		<dependency>
+		    <groupId>org.openjfx</groupId>
+		    <artifactId>javafx-media</artifactId>
+		    <version>11.0.2</version>
+		</dependency>
+ 		
+		<!-- https://mvnrepository.com/artifact/org.openjfx/javafx-controls -->
+		<dependency>
+		    <groupId>org.openjfx</groupId>
+		    <artifactId>javafx-controls</artifactId>
+		    <version>11.0.2</version>
+		</dependency>
+
+		
+		<!-- https://mvnrepository.com/artifact/org.openjfx/javafx -->
+		<dependency>
+		    <groupId>org.openjfx</groupId>
+		    <artifactId>javafx-base</artifactId>
+		    <version>11.0.2</version>
+		    <type>pom</type>
+		</dependency>
+		
+	</dependencies>
+  
+  
+  
+  <repositories>
+  	<repository>
+  		<url>https://www.ebi.ac.uk/intact/maven/nexus/content/repositories/public/</url>
+  		<id>openebi</id>
+  		<name>openebi</name>
+  	</repository>
+  </repositories>
+  
+</project>
