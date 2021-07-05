@@ -4,7 +4,8 @@ import static org.bytedeco.ffmpeg.global.avcodec.*;
 import static org.bytedeco.ffmpeg.global.avformat.*;
 import static org.bytedeco.ffmpeg.global.avutil.*;
 import static org.bytedeco.ffmpeg.global.swscale.SWS_BILINEAR;
-import static org.bytedeco.ffmpeg.global.swscale.sws_getContext;
+import static org.bytedeco.ffmpeg.global.swscale.sws_freeContext;
+import static org.bytedeco.ffmpeg.global.swscale.sws_getCachedContext;
 import static org.bytedeco.ffmpeg.global.swscale.sws_scale;
 
 import java.awt.Dimension;
@@ -98,12 +99,14 @@ public class MainByteDecoFFMPEG extends JDialog {
 			    AVFormatContext fmt_ctx = new AVFormatContext(null);
 			    AVInputFormat inputFormat = null;
 			    AVDictionary dict = new AVDictionary();
+			    SwsContext sws_ctx = null;
 
 		        int ret = -1, i = 0, v_stream_idx = -1;
 
 		        av_dict_set(dict, "frame_drop_threshold", "1", 0);
 		        av_dict_set(dict, "tune", "zerolatency", 0);
 		        av_dict_set(dict, "frames", "1", 0);
+		        av_dict_set(dict, "threads", "1", 0);
 
 		        if (url.startsWith("/dev/video")) {
 			        Dimension contentSize = canvas.getSize();
@@ -115,8 +118,11 @@ public class MainByteDecoFFMPEG extends JDialog {
 					inputFormat = av_find_input_format("v4l2");
 
 				    if (inputFormat == null) {
+				    	inputFormat = av_find_input_format("video4linux2");
+				    }
+
+				    if (inputFormat == null) {
 				    	System.out.printf("Cannot find input format - video4linux2");
-			            throw new IllegalStateException();
 				    }
 		        }
 
@@ -163,43 +169,50 @@ public class MainByteDecoFFMPEG extends JDialog {
 		            throw new IllegalStateException();
 		        }
 
-		        AVFrame frm = av_frame_alloc();
+		        AVFrame incomingFrame = av_frame_alloc();
+		        AVFrame pFrameRGB = av_frame_alloc();
+
+		        if (pFrameRGB == null || incomingFrame == null) {
+		            System.out.println("Can't open frame");
+		            System.exit(-1);
+		        }
 
 		        while (av_read_frame(fmt_ctx, pkt) >= 0) {
 		            if (pkt.stream_index() == v_stream_idx) {
 
 		                if (avcodec_send_packet(codec_ctx, pkt) >= 0) {
-		                	while (avcodec_receive_frame(codec_ctx, frm) >= 0) {
+		                	while (avcodec_receive_frame(codec_ctx, incomingFrame) >= 0) {
 
-		        		        Dimension contentSize = canvas.getSize();
-
-		        		        // Allocate an AVFrame structure
-		        		        AVFrame pFrameRGB = av_frame_alloc();
-
-		        		        if (pFrameRGB == null) {
-		        		            System.out.println("Can't open frame");
-		        		            System.exit(-1);
-		        		        }
+		        		        Dimension contentSize = getContentPane().getSize();
 
 		        		        pFrameRGB.format(AV_PIX_FMT_RGB24);
 		        		        pFrameRGB.width(contentSize.width);
 		        		        pFrameRGB.height(contentSize.height);
 
-		        		        if (av_image_alloc(pFrameRGB.data(), pFrameRGB.linesize(),
-		        		        		contentSize.width, contentSize.height, AV_PIX_FMT_RGB24, 8) < 0) {
-		        		            System.out.println("Can't allocate output data");
-		        		            throw new IllegalStateException();
-		        		        }
+		        		        int numBytes = av_image_get_buffer_size(
+		        		        		AV_PIX_FMT_RGB24,
+		        		        		contentSize.width,
+		        		        		contentSize.height,
+		        		        		1);
 
-		        		        System.out.printf("incoming: %dx%d outgoing %dx%d, lineSize[0] %d\n",
-		        		        		codec_ctx.width(), codec_ctx.height(),
-		        		        		contentSize.width, contentSize.height,
-		        		        		pFrameRGB.linesize(0)
-		        		        		);
+		        		        // Unfortunately memory allocated with av_image_alloc is difficult to free,
+		        		        // in the Bytedeco system, so it needs to be done this way.
+								BytePointer pointer = new BytePointer(av_malloc(numBytes));
 
-		        		        SwsContext sws_ctx = sws_getContext(
-		        		                codec_ctx.width(),
-		        		                codec_ctx.height(),
+								av_image_fill_arrays(
+										pFrameRGB.data(),
+        		        				pFrameRGB.linesize(),
+		        		        		pointer,
+        		        				AV_PIX_FMT_RGB24,
+		        		        		contentSize.width,
+		        		        		contentSize.height,
+		        		        		1
+    		        					);
+
+		        		        sws_ctx = sws_getCachedContext(
+		        		        		sws_ctx,
+		        		        		incomingFrame.width(),
+		        		        		incomingFrame.height(),
 		        		                codec_ctx.pix_fmt(),
 		        		                contentSize.width,
 		        		                contentSize.height,
@@ -217,23 +230,26 @@ public class MainByteDecoFFMPEG extends JDialog {
 
 				                sws_scale(
 				                        sws_ctx,
-				                        frm.data(),
-				                        frm.linesize(),
+				                        incomingFrame.data(),
+				                        incomingFrame.linesize(),
 				                        0,
 				                        codec_ctx.height(),
 				                        pFrameRGB.data(),
 				                        pFrameRGB.linesize()
 				                    );
 
-								byte[] data = new byte[contentSize.height * pFrameRGB.linesize(0)];
 
-								BytePointer pointer = pFrameRGB.data(0);
+				                // There is no simple way of using the C/C++ allocated data directly in Java
+				                // So we need to first copy the data into a Java byte array, and then into a Buffered Image
+								byte[] data = new byte[numBytes];
 								pointer.get(data);
 
 								BufferedImage out = new BufferedImage(contentSize.width, contentSize.height, BufferedImage.TYPE_3BYTE_BGR);
 								out.getRaster().setDataElements(0, 0, contentSize.width, contentSize.height, data);
 
-								av_free(pFrameRGB);
+								av_frame_unref(pFrameRGB);
+								av_frame_unref(incomingFrame);
+								av_free(pointer);
 								currentFrame = out;
 								canvas.repaint();
 		                	}
@@ -243,12 +259,12 @@ public class MainByteDecoFFMPEG extends JDialog {
 		            av_packet_unref(pkt);
 		        }
 
-		        av_frame_free(frm);
-
+				av_frame_free(pFrameRGB);
+		        av_frame_free(incomingFrame);
 		        avcodec_close(codec_ctx);
 		        avcodec_free_context(codec_ctx);
-
 		        avformat_close_input(fmt_ctx);
+		        sws_freeContext(sws_ctx);
 
 			} catch (Exception e) {
 				e.printStackTrace();
