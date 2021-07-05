@@ -41,8 +41,6 @@ public class MainByteDecoFFMPEG extends JDialog {
 
 		static {
 			System.setProperty("sun.awt.noerasebackground", "true");
-			nu.pattern.OpenCV.loadShared();
-			System.loadLibrary(org.opencv.core.Core.NATIVE_LIBRARY_NAME);
 		}
 
 		// =====================================================================================
