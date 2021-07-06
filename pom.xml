@@ -120,14 +120,6 @@
             <version>4.5.1-1.5.5</version>
         </dependency>
 
-        <!-- Optional GPL builds with (almost) everything enabled -->
-        <dependency>
-            <groupId>org.bytedeco</groupId>
-            <artifactId>ffmpeg-platform-gpl</artifactId>
-            <version>4.3.2-1.5.5</version>
-        </dependency>
- 		
- 		
  		<!--  ====================================================================== -->
  		<!-- https://mvnrepository.com/artifact/org.bytedeco/ffmpeg -->
 		<dependency>

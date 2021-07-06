@@ -25,6 +25,7 @@ import org.bytedeco.ffmpeg.avformat.AVFormatContext;
 import org.bytedeco.ffmpeg.avformat.AVInputFormat;
 import org.bytedeco.ffmpeg.avutil.AVDictionary;
 import org.bytedeco.ffmpeg.avutil.AVFrame;
+import org.bytedeco.ffmpeg.global.avdevice;
 import org.bytedeco.ffmpeg.swscale.SwsContext;
 import org.bytedeco.javacpp.BytePointer;
 import org.bytedeco.javacpp.DoublePointer;
@@ -98,6 +99,8 @@ public class MainByteDecoFFMPEG extends JDialog {
 			    AVInputFormat inputFormat = null;
 			    AVDictionary dict = new AVDictionary();
 			    SwsContext sws_ctx = null;
+
+			    avdevice.avdevice_register_all();
 
 		        int ret = -1, i = 0, v_stream_idx = -1;
 

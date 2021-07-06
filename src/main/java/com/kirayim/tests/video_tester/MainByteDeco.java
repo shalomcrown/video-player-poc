@@ -110,6 +110,8 @@ public class MainByteDeco extends JDialog {
 
 					opencv_imgproc.cvtColor(resizedFrame, resizedFrame, Imgproc.COLOR_RGB2BGR, 0);
 
+
+
 					BufferedImage out;
 					byte[] data = new byte[contentSize.width * contentSize.height * (int)resizedFrame.elemSize()];
 					int type;
